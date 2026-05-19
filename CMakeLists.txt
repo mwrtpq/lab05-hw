@@ -1,26 +1,21 @@
 cmake_minimum_required(VERSION 3.4)
 
-project(banking)
+project(lab05)
 
 set(CMAKE_CXX_STANDARD 11)
 
+enable_testing()
+
 add_library(banking
-
-    Account.cpp
-
-    Transaction.cpp
-
+    banking/Account.cpp
+    banking/Transaction.cpp
 )
 
 target_include_directories(banking PUBLIC
-
-    ${CMAKE_CURRENT_SOURCE_DIR}
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/banking
 )
 
 add_subdirectory(third-party/gtest)
-
-enable_testing()
 
 add_executable(check
     tests/account_test.cpp

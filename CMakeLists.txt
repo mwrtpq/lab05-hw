@@ -28,3 +28,5 @@ target_link_libraries(check
 )
 
 add_test(NAME check COMMAND check)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")

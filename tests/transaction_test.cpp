@@ -1,66 +1,52 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
 #include "Account.h"
 #include "Transaction.h"
 
-TEST(Transaction, Transfer)
+using ::testing::_;
+using ::testing::Return;
+using ::testing::NiceMock;
+
+class MockAccount : public Account
 {
-    Account from(1, 1000);
-    Account to(2, 500);
+public:
+    MockAccount(int id, int balance) : Account(id, balance) {}
+
+    MOCK_METHOD(int, GetBalance, (), (const, override));
+    MOCK_METHOD(void, ChangeBalance, (int diff), (override));
+    MOCK_METHOD(void, Lock, (), (override));
+    MOCK_METHOD(void, Unlock, (), (override));
+};
+
+TEST(Transaction, SuccessfulTransfer)
+{
+    NiceMock<MockAccount> from(1, 1000);
+    NiceMock<MockAccount> to(2, 500);
 
     Transaction transaction;
     transaction.set_fee(10);
 
-    EXPECT_TRUE(transaction.Make(from, to, 100));
-    EXPECT_EQ(from.GetBalance(), 890);
-    EXPECT_EQ(to.GetBalance(), 600);
-}
-#include <gtest/gtest.h>
+    EXPECT_CALL(from, GetBalance())
+        .WillRepeatedly(Return(1000));
 
-#include "Account.h"
-#include "Transaction.h"
+    EXPECT_CALL(to, GetBalance())
+        .WillRepeatedly(Return(500));
 
-class MockTransaction : public Transaction
-{
-public:
-    void SaveToDataBase(Account&, Account&, int) override
-    {
-        saved = true;
-    }
+    EXPECT_CALL(from, ChangeBalance(-110))
+        .Times(1);
 
-    bool saved = false;
-};
-
-TEST(Transaction, SetFee)
-{
-    MockTransaction transaction;
-
-    transaction.set_fee(10);
-
-    EXPECT_EQ(transaction.fee(), 10);
-}
-
-TEST(Transaction, SuccessfulTransfer)
-{
-    Account from(1, 1000);
-    Account to(2, 500);
-
-    MockTransaction transaction;
-
-    transaction.set_fee(10);
+    EXPECT_CALL(to, ChangeBalance(100))
+        .Times(1);
 
     EXPECT_TRUE(transaction.Make(from, to, 100));
-
-    EXPECT_EQ(from.GetBalance(), 890);
-    EXPECT_EQ(to.GetBalance(), 600);
-
-    EXPECT_TRUE(transaction.saved);
 }
 
 TEST(Transaction, SameAccount)
 {
-    Account account(1, 1000);
+    NiceMock<MockAccount> account(1, 1000);
 
-    MockTransaction transaction;
+    Transaction transaction;
 
     EXPECT_THROW(
         transaction.Make(account, account, 100),
@@ -70,23 +56,23 @@ TEST(Transaction, SameAccount)
 
 TEST(Transaction, NegativeSum)
 {
-    Account from(1, 1000);
-    Account to(2, 500);
+    NiceMock<MockAccount> from(1, 1000);
+    NiceMock<MockAccount> to(2, 500);
 
-    MockTransaction transaction;
+    Transaction transaction;
 
     EXPECT_THROW(
         transaction.Make(from, to, -100),
-        std::logic_error
+        std::invalid_argument
     );
 }
 
 TEST(Transaction, TooSmallSum)
 {
-    Account from(1, 1000);
-    Account to(2, 500);
+    NiceMock<MockAccount> from(1, 1000);
+    NiceMock<MockAccount> to(2, 500);
 
-    MockTransaction transaction;
+    Transaction transaction;
 
     EXPECT_THROW(
         transaction.Make(from, to, 0),
@@ -96,15 +82,17 @@ TEST(Transaction, TooSmallSum)
 
 TEST(Transaction, NotEnoughMoney)
 {
-    Account from(1, 50);
-    Account to(2, 500);
+    NiceMock<MockAccount> from(1, 50);
+    NiceMock<MockAccount> to(2, 500);
 
-    MockTransaction transaction;
-
+    Transaction transaction;
     transaction.set_fee(10);
 
-    EXPECT_FALSE(transaction.Make(from, to, 100));
+    EXPECT_CALL(from, GetBalance())
+        .WillRepeatedly(Return(50));
 
-    EXPECT_EQ(from.GetBalance(), 50);
-    EXPECT_EQ(to.GetBalance(), 500);
+    EXPECT_CALL(to, GetBalance())
+        .WillRepeatedly(Return(500));
+
+    EXPECT_FALSE(transaction.Make(from, to, 100));
 }

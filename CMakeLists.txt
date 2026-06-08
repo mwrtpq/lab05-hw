@@ -25,6 +25,7 @@ add_executable(check
 target_link_libraries(check
     banking
     gtest_main
+    gmock
 )
 
 add_test(NAME check COMMAND check)

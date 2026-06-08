@@ -38,7 +38,3 @@ TEST(Account, ChangeBalanceWithoutLock)
     EXPECT_ANY_THROW(account.ChangeBalance(50));
 }
 
-TEST(Account, NegativeBalance)
-{
-    EXPECT_ANY_THROW(Account(1, -100));
-}

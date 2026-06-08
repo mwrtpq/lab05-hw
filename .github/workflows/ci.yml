@@ -30,5 +30,8 @@ jobs:
 
       - name: Coverage
         run: |
-          lcov --capture --directory build --output-file coverage.info
-          lcov --summary coverage.info
+            lcov --capture --directory build --output-file coverage.info --ignore-errors mismatch
+
+            lcov --remove coverage.info '/usr/*' '*/third-party/*' '*/tests/*' --output-file coverage.info --ignore-errors unused,mismatch
+
+            lcov --summary coverage.info
